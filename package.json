@@ -1,0 +1,37 @@
+{
+  "name": "css-rtl-compiler",
+  "version": "0.0.0",
+  "description": "Convert CSS files into an RTL-compatible version.",
+  "main": "index.js",
+  "packageManager": "yarn@4.2.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/louy/css-rtl-compiler.git"
+  },
+  "author": "Louay <louy@users.noreply.github.com>",
+  "license": "Apache-2.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "bugs": {
+    "url": "https://github.com/louy/css-rtl-compiler/issues"
+  },
+  "homepage": "https://github.com/louy/css-rtl-compiler#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "conventional-changelog-cli": "^5.0.0",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "husky": "^9.0.11"
+  },
+  "scripts": {
+    "preversion": "cargo check",
+    "version": "echo $npm_package_version && yarn workspaces foreach -Atv version $npm_package_version && yarn workspaces foreach -Atv version $npm_package_version && yarn && git add packages/*/package.json && yarn version:yarn-lock && yarn version:cargo && yarn version:changelog",
+    "version:cargo": "perl -i -pe 's/^version = \"[^\"]+\"/version = \"'$npm_package_version'\"/' Cargo.toml && cargo check && git add Cargo.*",
+    "version:changelog": "yarn run conventional-changelog -i CHANGELOG.md -s -t v -p conventionalcommits && git add CHANGELOG.md",
+    "version:yarn-lock": "yarn && git add yarn.lock",
+    "bump": "npm version --force -m 'v%s' --git-tag-version=true",
+    "prepare": "husky install"
+  }
+}
