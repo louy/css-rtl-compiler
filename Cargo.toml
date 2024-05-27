@@ -10,6 +10,6 @@ license = "Apache-2.0"
 include = ["src/*.rs", "README.md", "LICENSE"]
 
 [workspace]
-members = ["css-rtl-compiler-wasm"]
+members = ["css-rtl-compiler-core", "css-rtl-compiler-wasm"]
 
 [dependencies]

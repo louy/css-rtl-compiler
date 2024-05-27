@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+use css_rtl_compiler_core::convert_css;
+
 // Called when the wasm module is instantiated
 #[wasm_bindgen(start)]
 fn main() -> Result<(), JsValue> {
@@ -8,5 +10,5 @@ fn main() -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 pub fn convert(css: &str) -> Result<String, String> {
-    Ok(String::from(css))
+    convert_css(css)
 }
