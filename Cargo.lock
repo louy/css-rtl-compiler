@@ -96,6 +96,7 @@ version = "0.0.0"
 name = "css-rtl-compiler-core"
 version = "0.0.0"
 dependencies = [
+ "lazy_static",
  "pretty_assertions",
  "swc_atoms",
  "swc_common",

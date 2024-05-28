@@ -11,6 +11,7 @@ swc_css_ast = "0.140.23"
 swc_css_codegen = "0.151.35"
 swc_css_parser = "0.150.33"
 swc_css_visit = "0.139.22"
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"

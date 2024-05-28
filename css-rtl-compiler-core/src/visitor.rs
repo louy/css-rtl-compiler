@@ -1,4 +1,14 @@
-use swc_css_visit::Fold;
+use swc_atoms::Atom;
+use swc_common::DUMMY_SP;
+use swc_css_ast::{
+    AttributeSelector, AttributeSelectorMatcher, AttributeSelectorMatcherValue,
+    AttributeSelectorValue, Combinator, CombinatorValue, ComplexSelector, ComplexSelectorChildren,
+    ComponentValue, CompoundSelector, Declaration, DeclarationName, Ident, NestingSelector,
+    PseudoClassSelector, PseudoClassSelectorChildren, QualifiedRule, QualifiedRulePrelude,
+    SelectorList, SimpleBlock, SubclassSelector, Token, TokenAndSpan, TypeSelector,
+    UniversalSelector, WqName,
+};
+use swc_css_visit::{VisitMut, VisitMutWith};
 
 pub struct CSSRTLCompilerVisitor {}
 
@@ -8,4 +18,341 @@ impl CSSRTLCompilerVisitor {
     }
 }
 
-impl Fold for CSSRTLCompilerVisitor {}
+lazy_static! {
+    static ref LTR_PRELUDE: QualifiedRulePrelude =
+        QualifiedRulePrelude::SelectorList(SelectorList {
+            span: DUMMY_SP,
+            children: vec![ComplexSelector {
+                span: DUMMY_SP,
+                children: vec![ComplexSelectorChildren::CompoundSelector(
+                    CompoundSelector {
+                        span: DUMMY_SP,
+                        nesting_selector: Some(NestingSelector { span: DUMMY_SP }),
+                        type_selector: None,
+                        subclass_selectors: vec![SubclassSelector::PseudoClass(
+                            PseudoClassSelector {
+                                span: DUMMY_SP,
+                                name: Ident {
+                                    span: DUMMY_SP,
+                                    value: Atom::new("where"),
+                                    raw: Some(Atom::new("where"))
+                                },
+                                children: Some(vec![PseudoClassSelectorChildren::SelectorList(
+                                    SelectorList {
+                                        span: DUMMY_SP,
+                                        children: vec![
+                                            // [dir=ltr]
+                                            ComplexSelector {
+                                                span: DUMMY_SP,
+                                                children: vec![
+                                                    ComplexSelectorChildren::CompoundSelector(
+                                                        CompoundSelector {
+                                                            span: DUMMY_SP,
+                                                            nesting_selector: None,
+                                                            type_selector: None,
+                                                            subclass_selectors: vec![
+                                                                SubclassSelector::Attribute(Box::new(
+                                                                    AttributeSelector {
+                                                                        span: DUMMY_SP,
+                                                                        name: WqName {
+                                                                        span: DUMMY_SP,
+                                                                        prefix: None,
+                                                                            value: Ident {
+                                                                                span: DUMMY_SP,
+                                                                                value: Atom::new("dir"),
+                                                                                raw: Some(Atom::new(
+                                                                                    "dir"
+                                                                                ))
+                                                                            },
+                                                                        },
+                                                                        matcher: Some(AttributeSelectorMatcher{
+                                                                        span: DUMMY_SP,
+                                                                        value: AttributeSelectorMatcherValue::Equals,
+                                                                        }),
+                                                                        value: Some(AttributeSelectorValue::Ident(Ident {
+                                                                            span: DUMMY_SP,
+                                                                            value: Atom::new("ltr"),
+                                                                            raw: Some(Atom::new(
+                                                                                "ltr"
+                                                                            ))
+                                                                        })),
+                                                                        modifier: None
+                                                                    }
+                                                                ))
+                                                            ]
+                                                        }
+                                                    )
+                                                ]
+                                            },
+                                            // [dir=ltr] *
+                                            ComplexSelector {
+                                                span: DUMMY_SP,
+                                                children: vec![
+                                                    ComplexSelectorChildren::CompoundSelector(
+                                                        CompoundSelector {
+                                                            span: DUMMY_SP,
+                                                            nesting_selector: None,
+                                                            type_selector: None,
+                                                            subclass_selectors: vec![
+                                                                SubclassSelector::Attribute(Box::new(
+                                                                    AttributeSelector {
+                                                                        span: DUMMY_SP,
+                                                                        name: WqName {
+                                                                        span: DUMMY_SP,
+                                                                        prefix: None,
+                                                                            value: Ident {
+                                                                                span: DUMMY_SP,
+                                                                                value: Atom::new("dir"),
+                                                                                raw: Some(Atom::new(
+                                                                                    "dir"
+                                                                                ))
+                                                                            },
+                                                                        },
+                                                                        matcher: Some(AttributeSelectorMatcher{
+                                                                        span: DUMMY_SP,
+                                                                        value: AttributeSelectorMatcherValue::Equals,
+                                                                        }),
+                                                                        value: Some(AttributeSelectorValue::Ident(Ident {
+                                                                            span: DUMMY_SP,
+                                                                            value: Atom::new("ltr"),
+                                                                            raw: Some(Atom::new(
+                                                                                "ltr"
+                                                                            ))
+                                                                        })),
+                                                                        modifier: None
+                                                                    }
+                                                                ))
+                                                            ]
+                                                        }
+                                                    ),
+                                                    ComplexSelectorChildren::Combinator(Combinator {
+                                                        span: DUMMY_SP,
+                                                        value: CombinatorValue::Descendant
+                                                    }),
+                                                    ComplexSelectorChildren::CompoundSelector(CompoundSelector{
+                                                        span: DUMMY_SP,
+                                                        nesting_selector: None,
+                                                        type_selector: Some(Box::new(TypeSelector::Universal(UniversalSelector {span:DUMMY_SP, prefix: None }))),
+                                                        subclass_selectors:vec![]
+                                                    })
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                )])
+                            }
+                        )]
+                    }
+                )],
+            }],
+        });
+
+    static ref RTL_PRELUDE: QualifiedRulePrelude =
+    QualifiedRulePrelude::SelectorList(SelectorList {
+        span: DUMMY_SP,
+        children: vec![ComplexSelector {
+            span: DUMMY_SP,
+            children: vec![ComplexSelectorChildren::CompoundSelector(
+                CompoundSelector {
+                    span: DUMMY_SP,
+                    nesting_selector: Some(NestingSelector { span: DUMMY_SP }),
+                    type_selector: None,
+                    subclass_selectors: vec![SubclassSelector::PseudoClass(
+                        PseudoClassSelector {
+                            span: DUMMY_SP,
+                            name: Ident {
+                                span: DUMMY_SP,
+                                value: Atom::new("where"),
+                                raw: Some(Atom::new("where"))
+                            },
+                            children: Some(vec![PseudoClassSelectorChildren::SelectorList(
+                                SelectorList {
+                                    span: DUMMY_SP,
+                                    children: vec![
+                                        // [dir=rtl]
+                                        ComplexSelector {
+                                        span: DUMMY_SP,
+                                        children: vec![
+                                            ComplexSelectorChildren::CompoundSelector(
+                                                CompoundSelector {
+                                                    span: DUMMY_SP,
+                                                    nesting_selector: None,
+                                                    type_selector: None,
+                                                    subclass_selectors: vec![
+                                                        SubclassSelector::Attribute(Box::new(
+                                                            AttributeSelector {
+                                                                span: DUMMY_SP,
+                                                                name: WqName {
+                                                                span: DUMMY_SP,
+                                                                prefix: None,
+                                                                    value: Ident {
+                                                                        span: DUMMY_SP,
+                                                                        value: Atom::new("dir"),
+                                                                        raw: Some(Atom::new(
+                                                                            "dir"
+                                                                        ))
+                                                                    },
+                                                                },
+                                                                matcher: Some(AttributeSelectorMatcher{
+                                                                span: DUMMY_SP,
+                                                                value: AttributeSelectorMatcherValue::Equals,
+                                                                }),
+                                                                value: Some(AttributeSelectorValue::Ident(Ident {
+                                                                    span: DUMMY_SP,
+                                                                    value: Atom::new("rtl"),
+                                                                    raw: Some(Atom::new(
+                                                                        "rtl"
+                                                                    ))
+                                                                })),
+                                                                modifier: None
+                                                            }
+                                                        ))
+                                                    ]
+                                                }
+                                            )
+                                        ]
+                                    },
+                                        // [dir=rtl] *
+                                    ComplexSelector {
+                                        span: DUMMY_SP,
+                                        children: vec![
+                                            ComplexSelectorChildren::CompoundSelector(
+                                                CompoundSelector {
+                                                    span: DUMMY_SP,
+                                                    nesting_selector: None,
+                                                    type_selector: None,
+                                                    subclass_selectors: vec![
+                                                        SubclassSelector::Attribute(Box::new(
+                                                            AttributeSelector {
+                                                                span: DUMMY_SP,
+                                                                name: WqName {
+                                                                span: DUMMY_SP,
+                                                                prefix: None,
+                                                                    value: Ident {
+                                                                        span: DUMMY_SP,
+                                                                        value: Atom::new("dir"),
+                                                                        raw: Some(Atom::new(
+                                                                            "dir"
+                                                                        ))
+                                                                    },
+                                                                },
+                                                                matcher: Some(AttributeSelectorMatcher{
+                                                                span: DUMMY_SP,
+                                                                value: AttributeSelectorMatcherValue::Equals,
+                                                                }),
+                                                                value: Some(AttributeSelectorValue::Ident(Ident {
+                                                                    span: DUMMY_SP,
+                                                                    value: Atom::new("rtl"),
+                                                                    raw: Some(Atom::new(
+                                                                        "rtl"
+                                                                    ))
+                                                                })),
+                                                                modifier: None
+                                                            }
+                                                        ))
+                                                    ]
+                                                }
+                                            ),
+                                            ComplexSelectorChildren::Combinator(Combinator {
+                                                span: DUMMY_SP,
+                                                value: CombinatorValue::Descendant
+                                            }),
+                                            ComplexSelectorChildren::CompoundSelector(CompoundSelector{
+                                                span: DUMMY_SP,
+                                                nesting_selector: None,
+                                                type_selector: Some(Box::new(TypeSelector::Universal(UniversalSelector {span:DUMMY_SP, prefix: None }))),
+                                                subclass_selectors:vec![]
+                                            })
+                                        ]
+                                    }]
+                                }
+                            )])
+                        }
+                    )]
+                }
+            )],
+        }],
+    });
+}
+
+impl VisitMut for CSSRTLCompilerVisitor {
+    fn visit_mut_qualified_rule(&mut self, n: &mut QualifiedRule) {
+        n.visit_mut_children_with(self);
+
+        // let mut new_value = Vec::<ComponentValue>::new();
+        let old_value = std::mem::replace(&mut n.block.value, Vec::<ComponentValue>::new());
+        let new_value = &mut n.block.value;
+
+        for val in old_value {
+            match val {
+                ComponentValue::Declaration(ref decl) => match &decl.name {
+                    DeclarationName::Ident(ref ident) => {
+                        match (&ident.value).to_ascii_lowercase().as_ref() {
+                            "right" | "left" | "margin-right" | "margin-left" | "padding-right"
+                            | "padding-left" => {
+                                let rtl_name = match ident.value.to_ascii_lowercase().as_ref() {
+                                    "right" => "left",
+                                    "left" => "right",
+                                    "margin-right" => "margin-left",
+                                    "margin-left" => "margin-right",
+                                    "padding-right" => "padding-left",
+                                    "padding-left" => "padding-right",
+                                    _ => "",
+                                };
+                                new_value.push(ComponentValue::QualifiedRule(Box::new(
+                                    QualifiedRule {
+                                        prelude: LTR_PRELUDE.clone(),
+                                        block: SimpleBlock {
+                                            span: decl.span.clone(),
+                                            name: TokenAndSpan {
+                                                span: decl.span.clone(),
+                                                token: Token::LBrace,
+                                            },
+                                            value: vec![ComponentValue::Declaration(Box::new(
+                                                Declaration {
+                                                    name: DeclarationName::Ident(ident.clone()),
+                                                    value: decl.value.clone(),
+                                                    span: decl.span.clone(),
+                                                    important: decl.important.clone(),
+                                                },
+                                            ))],
+                                        },
+                                        span: decl.span.clone(),
+                                    },
+                                )));
+                                new_value.push(ComponentValue::QualifiedRule(Box::new(
+                                    QualifiedRule {
+                                        prelude: RTL_PRELUDE.clone(),
+                                        block: SimpleBlock {
+                                            span: decl.span.clone(),
+                                            name: TokenAndSpan {
+                                                span: decl.span.clone(),
+                                                token: Token::LBrace,
+                                            },
+                                            value: vec![ComponentValue::Declaration(Box::new(
+                                                Declaration {
+                                                    name: DeclarationName::Ident(Ident {
+                                                        span: decl.span.clone(),
+                                                        value: Atom::new(rtl_name),
+                                                        raw: Some(Atom::new(rtl_name)),
+                                                    }),
+                                                    value: decl.value.clone(),
+                                                    span: decl.span.clone(),
+                                                    important: decl.important.clone(),
+                                                },
+                                            ))],
+                                        },
+                                        span: decl.span.clone(),
+                                    },
+                                )));
+                            }
+                            _ => new_value.push(val),
+                        }
+                    }
+                    _ => new_value.push(val),
+                },
+                _ => new_value.push(val),
+            }
+        }
+    }
+}
