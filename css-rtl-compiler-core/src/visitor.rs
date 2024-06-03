@@ -275,6 +275,67 @@ lazy_static! {
     });
 }
 
+fn convert_declaration(decl: Declaration) -> Vec<ComponentValue> {
+    match &decl.name {
+        DeclarationName::Ident(ref ident) => match (&ident.value).to_ascii_lowercase().as_ref() {
+            "right" | "left" | "margin-right" | "margin-left" | "padding-right"
+            | "padding-left" => {
+                let rtl_name = match ident.value.to_ascii_lowercase().as_ref() {
+                    "right" => "left",
+                    "left" => "right",
+                    "margin-right" => "margin-left",
+                    "margin-left" => "margin-right",
+                    "padding-right" => "padding-left",
+                    "padding-left" => "padding-right",
+                    _ => "",
+                };
+                vec![
+                    ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+                        prelude: LTR_PRELUDE.clone(),
+                        block: SimpleBlock {
+                            span: decl.span.clone(),
+                            name: TokenAndSpan {
+                                span: decl.span.clone(),
+                                token: Token::LBrace,
+                            },
+                            value: vec![ComponentValue::Declaration(Box::new(Declaration {
+                                name: DeclarationName::Ident(ident.clone()),
+                                value: decl.value.clone(),
+                                span: decl.span.clone(),
+                                important: decl.important.clone(),
+                            }))],
+                        },
+                        span: decl.span.clone(),
+                    })),
+                    ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+                        prelude: RTL_PRELUDE.clone(),
+                        block: SimpleBlock {
+                            span: decl.span.clone(),
+                            name: TokenAndSpan {
+                                span: decl.span.clone(),
+                                token: Token::LBrace,
+                            },
+                            value: vec![ComponentValue::Declaration(Box::new(Declaration {
+                                name: DeclarationName::Ident(Ident {
+                                    span: decl.span.clone(),
+                                    value: Atom::new(rtl_name),
+                                    raw: Some(Atom::new(rtl_name)),
+                                }),
+                                value: decl.value.clone(),
+                                span: decl.span.clone(),
+                                important: decl.important.clone(),
+                            }))],
+                        },
+                        span: decl.span.clone(),
+                    })),
+                ]
+            }
+            _ => vec![ComponentValue::Declaration(Box::new(decl))],
+        },
+        _ => vec![ComponentValue::Declaration(Box::new(decl))],
+    }
+}
+
 impl VisitMut for CSSRTLCompilerVisitor {
     fn visit_mut_qualified_rule(&mut self, n: &mut QualifiedRule) {
         n.visit_mut_children_with(self);
@@ -285,72 +346,9 @@ impl VisitMut for CSSRTLCompilerVisitor {
 
         for val in old_value {
             match val {
-                ComponentValue::Declaration(ref decl) => match &decl.name {
-                    DeclarationName::Ident(ref ident) => {
-                        match (&ident.value).to_ascii_lowercase().as_ref() {
-                            "right" | "left" | "margin-right" | "margin-left" | "padding-right"
-                            | "padding-left" => {
-                                let rtl_name = match ident.value.to_ascii_lowercase().as_ref() {
-                                    "right" => "left",
-                                    "left" => "right",
-                                    "margin-right" => "margin-left",
-                                    "margin-left" => "margin-right",
-                                    "padding-right" => "padding-left",
-                                    "padding-left" => "padding-right",
-                                    _ => "",
-                                };
-                                new_value.push(ComponentValue::QualifiedRule(Box::new(
-                                    QualifiedRule {
-                                        prelude: LTR_PRELUDE.clone(),
-                                        block: SimpleBlock {
-                                            span: decl.span.clone(),
-                                            name: TokenAndSpan {
-                                                span: decl.span.clone(),
-                                                token: Token::LBrace,
-                                            },
-                                            value: vec![ComponentValue::Declaration(Box::new(
-                                                Declaration {
-                                                    name: DeclarationName::Ident(ident.clone()),
-                                                    value: decl.value.clone(),
-                                                    span: decl.span.clone(),
-                                                    important: decl.important.clone(),
-                                                },
-                                            ))],
-                                        },
-                                        span: decl.span.clone(),
-                                    },
-                                )));
-                                new_value.push(ComponentValue::QualifiedRule(Box::new(
-                                    QualifiedRule {
-                                        prelude: RTL_PRELUDE.clone(),
-                                        block: SimpleBlock {
-                                            span: decl.span.clone(),
-                                            name: TokenAndSpan {
-                                                span: decl.span.clone(),
-                                                token: Token::LBrace,
-                                            },
-                                            value: vec![ComponentValue::Declaration(Box::new(
-                                                Declaration {
-                                                    name: DeclarationName::Ident(Ident {
-                                                        span: decl.span.clone(),
-                                                        value: Atom::new(rtl_name),
-                                                        raw: Some(Atom::new(rtl_name)),
-                                                    }),
-                                                    value: decl.value.clone(),
-                                                    span: decl.span.clone(),
-                                                    important: decl.important.clone(),
-                                                },
-                                            ))],
-                                        },
-                                        span: decl.span.clone(),
-                                    },
-                                )));
-                            }
-                            _ => new_value.push(val),
-                        }
-                    }
-                    _ => new_value.push(val),
-                },
+                ComponentValue::Declaration(decl) => {
+                    new_value.append(&mut convert_declaration(*decl))
+                }
                 _ => new_value.push(val),
             }
         }

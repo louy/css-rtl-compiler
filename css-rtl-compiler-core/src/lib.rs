@@ -109,7 +109,14 @@ mod tests {
     #[test]
     fn test_simple_rule() {
         assert_eq!(
-            print_css(&convert_css(r#"body { right: 0; }"#).unwrap()),
+            print_css(
+                &convert_css(
+                    r#"
+body { right: 0; }
+"#
+                )
+                .unwrap()
+            ),
             print_css(
                 r#"
 body {
@@ -119,7 +126,8 @@ body {
     &:where([dir=rtl], [dir=rtl] *) {
       left: 0;
     }
-}"#
+}
+"#
             )
         );
     }
