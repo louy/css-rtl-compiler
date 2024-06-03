@@ -117,6 +117,7 @@ body {
     right: 0;
     left: 1;
     padding: 1px 2em 3rem calc(4);
+    direction: ltr;
 }
 "#
                 )
@@ -130,11 +131,13 @@ body {
         right: 0;
         left: 1;
         padding: 1px 2em 3rem calc(4);
+        direction: ltr;
     }
     &:where([dir=rtl], [dir=rtl] *) {
         left: 0;
         right: 1;
         padding: 1px calc(4) 3rem 2em;
+        direction: rtl;
     }
 }
 "#
@@ -197,6 +200,34 @@ tag {
     }
 }
 "#
+            )
+        );
+    }
+
+    #[test]
+    fn test_pseduo_class() {
+        assert_eq!(
+            print_css(
+                &convert_css(
+                    r#"
+    :root {
+        direction: ltr;
+    }
+    "#
+                )
+                .unwrap()
+            ),
+            print_css(
+                r#"
+    :root {
+        &:where([dir=ltr], [dir=ltr] *) {
+            direction: ltr;
+        }
+        &:where([dir=rtl], [dir=rtl] *) {
+            direction: rtl;
+        }
+    }
+    "#
             )
         );
     }

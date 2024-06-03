@@ -325,6 +325,43 @@ fn convert_declaration(
                     Some(decl)
                 }
             }
+            "direction" => {
+                if decl.value.len() == 1 {
+                    match decl.value.get(0).unwrap() {
+                        ComponentValue::Ident(ident) if ident.value == "ltr" => {
+                            rtl_vec.push(ComponentValue::Declaration(Box::new(Declaration {
+                                name: decl.name.clone(),
+                                value: vec![ComponentValue::Ident(Box::new(Ident {
+                                    span: decl.span.clone(),
+                                    value: "rtl".into(),
+                                    raw: Some("rtl".into()),
+                                }))],
+                                span: decl.span.clone(),
+                                important: decl.important.clone(),
+                            })));
+                            ltr_vec.push(ComponentValue::Declaration(Box::new(decl)));
+                            None
+                        }
+                        ComponentValue::Ident(ident) if ident.value == "rtl" => {
+                            rtl_vec.push(ComponentValue::Declaration(Box::new(Declaration {
+                                name: decl.name.clone(),
+                                value: vec![ComponentValue::Ident(Box::new(Ident {
+                                    span: decl.span.clone(),
+                                    value: "ltr".into(),
+                                    raw: Some("ltr".into()),
+                                }))],
+                                span: decl.span.clone(),
+                                important: decl.important.clone(),
+                            })));
+                            ltr_vec.push(ComponentValue::Declaration(Box::new(decl)));
+                            None
+                        }
+                        _ => Some(decl),
+                    }
+                } else {
+                    Some(decl)
+                }
+            }
             _ => Some(decl),
         },
         _ => Some(decl),
