@@ -231,4 +231,62 @@ tag {
             )
         );
     }
+
+    #[test]
+    fn test_multiple_selectors() {
+        assert_eq!(
+            print_css(
+                &convert_css(
+                    r#"
+    :root {
+        direction: ltr;
+        padding-right: env(safe-area-inset-right, 1em);
+        padding-left: env(safe-area-inset-left, 1.4rem);
+        padding-top: env(safe-area-inset-top);
+    }
+    body { right: 0; }
+    @media (min-width: 600px) {
+        #selector { padding-left: 11px; }
+    }
+    "#
+                )
+                .unwrap()
+            ),
+            print_css(
+                r#"
+    :root {
+        padding-top: env(safe-area-inset-top);
+        &:where([dir=ltr], [dir=ltr] *) {
+            direction: ltr;
+            padding-right: env(safe-area-inset-right, 1em);
+            padding-left: env(safe-area-inset-left, 1.4rem);
+        }
+        &:where([dir=rtl], [dir=rtl] *) {
+            direction: rtl;
+            padding-left: env(safe-area-inset-left, 1em);
+            padding-right: env(safe-area-inset-right, 1.4rem);
+        }
+    }
+    body {
+        &:where([dir=ltr], [dir=ltr] *) {
+          right: 0;
+        }
+        &:where([dir=rtl], [dir=rtl] *) {
+          left: 0;
+        }
+    }
+    @media (min-width: 600px) {
+        #selector {
+            &:where([dir=ltr], [dir=ltr] *) {
+                padding-left: 11px;
+            }
+            &:where([dir=rtl], [dir=rtl] *) {
+                padding-right: 11px;
+            }
+        }
+    }
+    "#
+            )
+        );
+    }
 }

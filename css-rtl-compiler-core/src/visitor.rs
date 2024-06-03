@@ -3,10 +3,10 @@ use swc_common::DUMMY_SP;
 use swc_css_ast::{
     AttributeSelector, AttributeSelectorMatcher, AttributeSelectorMatcherValue,
     AttributeSelectorValue, Combinator, CombinatorValue, ComplexSelector, ComplexSelectorChildren,
-    ComponentValue, CompoundSelector, Declaration, DeclarationName, Ident, NestingSelector,
-    PseudoClassSelector, PseudoClassSelectorChildren, QualifiedRule, QualifiedRulePrelude,
-    SelectorList, SimpleBlock, SubclassSelector, Token, TokenAndSpan, TypeSelector,
-    UniversalSelector, WqName,
+    ComponentValue, CompoundSelector, Declaration, DeclarationName, FunctionName, Ident,
+    NestingSelector, PseudoClassSelector, PseudoClassSelectorChildren, QualifiedRule,
+    QualifiedRulePrelude, SelectorList, SimpleBlock, SubclassSelector, Token, TokenAndSpan,
+    TypeSelector, UniversalSelector, WqName,
 };
 use swc_css_visit::{VisitMut, VisitMutWith};
 
@@ -15,6 +15,20 @@ pub struct CSSRTLCompilerVisitor {}
 impl CSSRTLCompilerVisitor {
     pub fn new() -> Self {
         Self {}
+    }
+}
+
+impl VisitMut for CSSRTLCompilerVisitor {
+    fn visit_mut_qualified_rule(&mut self, n: &mut QualifiedRule) {
+        n.visit_mut_children_with(self);
+        convert_block(&mut n.block);
+    }
+
+    fn visit_mut_at_rule(&mut self, n: &mut swc_css_ast::AtRule) {
+        n.visit_mut_children_with(self);
+        if let Some(ref mut block) = n.block {
+            convert_block(block);
+        }
     }
 }
 
@@ -387,7 +401,7 @@ fn convert_block(block: &mut SimpleBlock) {
     }
 
     if ltr_vec.len() > 0 {
-        new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+        let ltr_rule = QualifiedRule {
             prelude: LTR_PRELUDE.clone(),
             block: SimpleBlock {
                 span: DUMMY_SP,
@@ -398,10 +412,11 @@ fn convert_block(block: &mut SimpleBlock) {
                 value: ltr_vec,
             },
             span: DUMMY_SP,
-        })));
+        };
+        new_value.push(ComponentValue::QualifiedRule(Box::new(ltr_rule)));
     }
     if rtl_vec.len() > 0 {
-        new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+        let mut rtl_rule = QualifiedRule {
             prelude: RTL_PRELUDE.clone(),
             block: SimpleBlock {
                 span: DUMMY_SP,
@@ -412,22 +427,37 @@ fn convert_block(block: &mut SimpleBlock) {
                 value: rtl_vec,
             },
             span: DUMMY_SP,
-        })));
+        };
+        rtl_rule.visit_mut_children_with(&mut CSSRTLCompilerValuesVisitor::new());
+        new_value.push(ComponentValue::QualifiedRule(Box::new(rtl_rule)));
     }
 }
 
-impl VisitMut for CSSRTLCompilerVisitor {
-    fn visit_mut_qualified_rule(&mut self, n: &mut QualifiedRule) {
-        n.visit_mut_children_with(self);
+pub struct CSSRTLCompilerValuesVisitor {}
 
-        convert_block(&mut n.block);
+impl CSSRTLCompilerValuesVisitor {
+    pub fn new() -> Self {
+        Self {}
     }
+}
 
-    fn visit_mut_at_rule(&mut self, n: &mut swc_css_ast::AtRule) {
+impl VisitMut for CSSRTLCompilerValuesVisitor {
+    fn visit_mut_function(&mut self, n: &mut swc_css_ast::Function) {
         n.visit_mut_children_with(self);
 
-        if let Some(ref mut block) = n.block {
-            convert_block(block);
+        match &mut n.name {
+            FunctionName::Ident(name) if name.value == "env" => match n.value.get_mut(0) {
+                Some(ComponentValue::Ident(ident)) if ident.value == "safe-area-inset-left" => {
+                    ident.value = "safe-area-inset-right".into();
+                    ident.raw = Some("safe-area-inset-right".into());
+                }
+                Some(ComponentValue::Ident(ident)) if ident.value == "safe-area-inset-right" => {
+                    ident.value = "safe-area-inset-left".into();
+                    ident.raw = Some("safe-area-inset-left".into());
+                }
+                _ => {}
+            },
+            _ => {}
         }
     }
 }
