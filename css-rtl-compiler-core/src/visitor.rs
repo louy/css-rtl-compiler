@@ -275,7 +275,11 @@ lazy_static! {
     });
 }
 
-fn convert_declaration(decl: Declaration) -> Vec<ComponentValue> {
+fn convert_declaration(
+    decl: Declaration,
+    ltr_vec: &mut Vec<ComponentValue>,
+    rtl_vec: &mut Vec<ComponentValue>,
+) -> Option<Declaration> {
     match &decl.name {
         DeclarationName::Ident(ref ident) => match (&ident.value).to_ascii_lowercase().as_ref() {
             "right" | "left" | "margin-right" | "margin-left" | "padding-right"
@@ -289,50 +293,41 @@ fn convert_declaration(decl: Declaration) -> Vec<ComponentValue> {
                     "padding-left" => "padding-right",
                     _ => "",
                 };
-                vec![
-                    ComponentValue::QualifiedRule(Box::new(QualifiedRule {
-                        prelude: LTR_PRELUDE.clone(),
-                        block: SimpleBlock {
-                            span: decl.span.clone(),
-                            name: TokenAndSpan {
-                                span: decl.span.clone(),
-                                token: Token::LBrace,
-                            },
-                            value: vec![ComponentValue::Declaration(Box::new(Declaration {
-                                name: DeclarationName::Ident(ident.clone()),
-                                value: decl.value.clone(),
-                                span: decl.span.clone(),
-                                important: decl.important.clone(),
-                            }))],
-                        },
+                rtl_vec.push(ComponentValue::Declaration(Box::new(Declaration {
+                    name: DeclarationName::Ident(Ident {
                         span: decl.span.clone(),
-                    })),
-                    ComponentValue::QualifiedRule(Box::new(QualifiedRule {
-                        prelude: RTL_PRELUDE.clone(),
-                        block: SimpleBlock {
-                            span: decl.span.clone(),
-                            name: TokenAndSpan {
-                                span: decl.span.clone(),
-                                token: Token::LBrace,
-                            },
-                            value: vec![ComponentValue::Declaration(Box::new(Declaration {
-                                name: DeclarationName::Ident(Ident {
-                                    span: decl.span.clone(),
-                                    value: Atom::new(rtl_name),
-                                    raw: Some(Atom::new(rtl_name)),
-                                }),
-                                value: decl.value.clone(),
-                                span: decl.span.clone(),
-                                important: decl.important.clone(),
-                            }))],
-                        },
-                        span: decl.span.clone(),
-                    })),
-                ]
+                        value: Atom::new(rtl_name),
+                        raw: Some(Atom::new(rtl_name)),
+                    }),
+                    value: decl.value.clone(),
+                    span: decl.span.clone(),
+                    important: decl.important.clone(),
+                })));
+                ltr_vec.push(ComponentValue::Declaration(Box::new(decl)));
+                None
             }
-            _ => vec![ComponentValue::Declaration(Box::new(decl))],
+            "padding" | "margin" => {
+                if decl.value.len() == 4 {
+                    rtl_vec.push(ComponentValue::Declaration(Box::new(Declaration {
+                        name: decl.name.clone(),
+                        value: vec![
+                            decl.value[0].clone(),
+                            decl.value[3].clone(),
+                            decl.value[2].clone(),
+                            decl.value[1].clone(),
+                        ],
+                        span: decl.span.clone(),
+                        important: decl.important.clone(),
+                    })));
+                    ltr_vec.push(ComponentValue::Declaration(Box::new(decl)));
+                    None
+                } else {
+                    Some(decl)
+                }
+            }
+            _ => Some(decl),
         },
-        _ => vec![ComponentValue::Declaration(Box::new(decl))],
+        _ => Some(decl),
     }
 }
 
@@ -344,13 +339,47 @@ impl VisitMut for CSSRTLCompilerVisitor {
         let old_value = std::mem::replace(&mut n.block.value, Vec::<ComponentValue>::new());
         let new_value = &mut n.block.value;
 
+        let mut ltr_vec: Vec<ComponentValue> = vec![];
+        let mut rtl_vec: Vec<ComponentValue> = vec![];
+
         for val in old_value {
             match val {
                 ComponentValue::Declaration(decl) => {
-                    new_value.append(&mut convert_declaration(*decl))
+                    if let Some(decl) = convert_declaration(*decl, &mut ltr_vec, &mut rtl_vec) {
+                        new_value.push(ComponentValue::Declaration(Box::new(decl)));
+                    }
                 }
                 _ => new_value.push(val),
             }
+        }
+
+        if ltr_vec.len() > 0 {
+            new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+                prelude: LTR_PRELUDE.clone(),
+                block: SimpleBlock {
+                    span: DUMMY_SP,
+                    name: TokenAndSpan {
+                        span: DUMMY_SP,
+                        token: Token::LBrace,
+                    },
+                    value: ltr_vec,
+                },
+                span: DUMMY_SP,
+            })));
+        }
+        if rtl_vec.len() > 0 {
+            new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+                prelude: RTL_PRELUDE.clone(),
+                block: SimpleBlock {
+                    span: DUMMY_SP,
+                    name: TokenAndSpan {
+                        span: DUMMY_SP,
+                        token: Token::LBrace,
+                    },
+                    value: rtl_vec,
+                },
+                span: DUMMY_SP,
+            })));
         }
     }
 }

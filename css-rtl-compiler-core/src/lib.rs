@@ -112,7 +112,12 @@ mod tests {
             print_css(
                 &convert_css(
                     r#"
-body { right: 0; }
+body {
+    color: white;
+    right: 0;
+    left: 1;
+    padding: 1px 2em 3rem calc(4);
+}
 "#
                 )
                 .unwrap()
@@ -120,11 +125,16 @@ body { right: 0; }
             print_css(
                 r#"
 body {
+    color: white;
     &:where([dir=ltr], [dir=ltr] *) {
-      right: 0;
+        right: 0;
+        left: 1;
+        padding: 1px 2em 3rem calc(4);
     }
     &:where([dir=rtl], [dir=rtl] *) {
-      left: 0;
+        left: 0;
+        right: 1;
+        padding: 1px calc(4) 3rem 2em;
     }
 }
 "#
