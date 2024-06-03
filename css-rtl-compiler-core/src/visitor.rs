@@ -331,55 +331,66 @@ fn convert_declaration(
     }
 }
 
+fn convert_block(block: &mut SimpleBlock) {
+    let old_value = std::mem::replace(&mut block.value, Vec::<ComponentValue>::new());
+    let new_value = &mut block.value;
+
+    let mut ltr_vec: Vec<ComponentValue> = vec![];
+    let mut rtl_vec: Vec<ComponentValue> = vec![];
+
+    for val in old_value {
+        match val {
+            ComponentValue::Declaration(decl) => {
+                if let Some(decl) = convert_declaration(*decl, &mut ltr_vec, &mut rtl_vec) {
+                    new_value.push(ComponentValue::Declaration(Box::new(decl)));
+                }
+            }
+            _ => new_value.push(val),
+        }
+    }
+
+    if ltr_vec.len() > 0 {
+        new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+            prelude: LTR_PRELUDE.clone(),
+            block: SimpleBlock {
+                span: DUMMY_SP,
+                name: TokenAndSpan {
+                    span: DUMMY_SP,
+                    token: Token::LBrace,
+                },
+                value: ltr_vec,
+            },
+            span: DUMMY_SP,
+        })));
+    }
+    if rtl_vec.len() > 0 {
+        new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
+            prelude: RTL_PRELUDE.clone(),
+            block: SimpleBlock {
+                span: DUMMY_SP,
+                name: TokenAndSpan {
+                    span: DUMMY_SP,
+                    token: Token::LBrace,
+                },
+                value: rtl_vec,
+            },
+            span: DUMMY_SP,
+        })));
+    }
+}
+
 impl VisitMut for CSSRTLCompilerVisitor {
     fn visit_mut_qualified_rule(&mut self, n: &mut QualifiedRule) {
         n.visit_mut_children_with(self);
 
-        // let mut new_value = Vec::<ComponentValue>::new();
-        let old_value = std::mem::replace(&mut n.block.value, Vec::<ComponentValue>::new());
-        let new_value = &mut n.block.value;
+        convert_block(&mut n.block);
+    }
 
-        let mut ltr_vec: Vec<ComponentValue> = vec![];
-        let mut rtl_vec: Vec<ComponentValue> = vec![];
+    fn visit_mut_at_rule(&mut self, n: &mut swc_css_ast::AtRule) {
+        n.visit_mut_children_with(self);
 
-        for val in old_value {
-            match val {
-                ComponentValue::Declaration(decl) => {
-                    if let Some(decl) = convert_declaration(*decl, &mut ltr_vec, &mut rtl_vec) {
-                        new_value.push(ComponentValue::Declaration(Box::new(decl)));
-                    }
-                }
-                _ => new_value.push(val),
-            }
-        }
-
-        if ltr_vec.len() > 0 {
-            new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
-                prelude: LTR_PRELUDE.clone(),
-                block: SimpleBlock {
-                    span: DUMMY_SP,
-                    name: TokenAndSpan {
-                        span: DUMMY_SP,
-                        token: Token::LBrace,
-                    },
-                    value: ltr_vec,
-                },
-                span: DUMMY_SP,
-            })));
-        }
-        if rtl_vec.len() > 0 {
-            new_value.push(ComponentValue::QualifiedRule(Box::new(QualifiedRule {
-                prelude: RTL_PRELUDE.clone(),
-                block: SimpleBlock {
-                    span: DUMMY_SP,
-                    name: TokenAndSpan {
-                        span: DUMMY_SP,
-                        token: Token::LBrace,
-                    },
-                    value: rtl_vec,
-                },
-                span: DUMMY_SP,
-            })));
+        if let Some(ref mut block) = n.block {
+            convert_block(block);
         }
     }
 }

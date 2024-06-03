@@ -141,4 +141,63 @@ body {
             )
         );
     }
+
+    #[test]
+    fn test_media_query() {
+        assert_eq!(
+            print_css(
+                &convert_css(
+                    r#"
+@media (min-width: 600px) {
+    #selector { padding-left: 11px; }
+}
+"#
+                )
+                .unwrap()
+            ),
+            print_css(
+                r#"
+@media (min-width: 600px) {
+    #selector { 
+        &:where([dir=ltr], [dir=ltr] *) {
+            padding-left: 11px; 
+        }
+        &:where([dir=rtl], [dir=rtl] *) {
+            padding-right: 11px; 
+        }
+    }
+}
+"#
+            )
+        );
+
+        assert_eq!(
+            print_css(
+                &convert_css(
+                    r#"
+tag {
+    @media (min-width: 600px) {
+        margin: 1 2 3 4;
+    }
+}
+"#
+                )
+                .unwrap()
+            ),
+            print_css(
+                r#"
+tag {
+    @media (min-width: 600px) {
+        &:where([dir=ltr], [dir=ltr] *) {
+            margin: 1 2 3 4;
+        }
+        &:where([dir=rtl], [dir=rtl] *) {
+            margin: 1 4 3 2;
+        }
+    }
+}
+"#
+            )
+        );
+    }
 }
