@@ -35,7 +35,7 @@ pub fn convert_css(input: &str) -> Result<String, String> {
 
     let mut stylesheet = parser.parse_all().expect("failed to parser module");
 
-    let mut visitor = CSSRTLCompilerVisitor::new();
+    let mut visitor = CSSRTLCompilerVisitor {};
     stylesheet.visit_mut_with(&mut visitor);
 
     let mut output = String::new();

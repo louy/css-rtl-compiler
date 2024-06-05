@@ -1,32 +1,32 @@
 @media (min-width: 600px) {
-  #selector { 
-      &:where([dir=ltr], [dir=ltr] *) {
-          padding-left: 11px; 
-      }
-      &:where([dir=rtl], [dir=rtl] *) {
-          padding-right: 11px; 
-      }
+  #selector {
+    &:where([dir="ltr"], [dir="ltr"] *) {
+      padding-left: 11px;
+    }
+    &:where([dir="rtl"], [dir="rtl"] *) {
+      padding-right: 11px;
+    }
   }
 }
 
-a { 
+a {
   @media (max-height: 30rem) {
-    &:where([dir=ltr], [dir=ltr] *) {
-      margin-right: 0; 
+    &:where([dir="ltr"], [dir="ltr"] *) {
+      margin-right: 0;
     }
-    &:where([dir=rtl], [dir=rtl] *) {
-      margin-left: 0; 
+    &:where([dir="rtl"], [dir="rtl"] *) {
+      margin-left: 0;
     }
   }
 }
 
 p {
   @media (min-width: 600px) {
-      &:where([dir=ltr], [dir=ltr] *) {
-          margin: 1 2 3 4;
-      }
-      &:where([dir=rtl], [dir=rtl] *) {
-          margin: 1 4 3 2;
-      }
+    &:where([dir="ltr"], [dir="ltr"] *) {
+      margin: 1 2 3 4;
+    }
+    &:where([dir="rtl"], [dir="rtl"] *) {
+      margin: 1 4 3 2;
+    }
   }
 }

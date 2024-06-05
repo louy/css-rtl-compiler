@@ -1,8 +1,8 @@
 :root {
-  &:where([dir=ltr], [dir=ltr] *) {
-      direction: ltr;
+  &:where([dir="ltr"], [dir="ltr"] *) {
+    direction: ltr;
   }
-  &:where([dir=rtl], [dir=rtl] *) {
-      direction: rtl;
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    direction: rtl;
   }
 }

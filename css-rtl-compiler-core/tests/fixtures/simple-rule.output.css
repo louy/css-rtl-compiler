@@ -1,15 +1,15 @@
 body {
   color: white;
-  &:where([dir=ltr], [dir=ltr] *) {
-      right: 0;
-      left: 1;
-      padding: 1px 2em 3rem calc(4);
-      direction: ltr;
+  &:where([dir="ltr"], [dir="ltr"] *) {
+    right: 0;
+    left: 1;
+    padding: 1px 2em 3rem calc(4);
+    direction: ltr;
   }
-  &:where([dir=rtl], [dir=rtl] *) {
-      left: 0;
-      right: 1;
-      padding: 1px calc(4) 3rem 2em;
-      direction: rtl;
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    left: 0;
+    right: 1;
+    padding: 1px calc(4) 3rem 2em;
+    direction: rtl;
   }
 }
