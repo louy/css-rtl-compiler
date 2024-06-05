@@ -1,6 +1,9 @@
 # CSS RTL Compiler
 Convert CSS files into an RTL-compatible version.
 
+> [!WARNING]
+> This library is work in progress and is un-finished. Contributions & ideas are welcome.
+
 This library aims to produce CSS that is bi-directional, but that doesn't change how the CSS behaves (doesn't affect specificity of selectors).
 
 The idea is simple: move every CSS property declaration that is direction dependent, such as `right`, `left`, `text-align`, etc, into a direction specific selector, and create two variants of each.
@@ -27,6 +30,7 @@ Output:
 ```
 
 The output CSS will work as long as:
-- All CSS for a given page is processed through this tool
+- All CSS for a given page is processed through this tool.
 - The page (or root element in a shadow DOM) where the CSS is used has `dir` attribute set.
   - Note: `:dir` css pseduo-class [doesn't have wide-enough support](https://caniuse.com/css-dir-pseudo) to be used, so we opted for `[dir]` instead.
+- There's only one direction per DOM tree. Produced CSS does not support documents with mixed directions.
