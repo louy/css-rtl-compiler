@@ -331,17 +331,12 @@ fn convert_declaration(
 }
 
 fn convert_block(block: &mut SimpleBlock) {
-    let old_value = std::mem::replace(&mut block.value, Vec::<ComponentValue>::new());
-    let mut new_value = &mut block.value;
-
-    let mut ltr_vec: Vec<ComponentValue> = vec![];
-    let mut rtl_vec: Vec<ComponentValue> = vec![];
-
-    fn commit(
-        new_value: &mut Vec<ComponentValue>,
-        ltr_vec: &mut Vec<ComponentValue>,
-        rtl_vec: &mut Vec<ComponentValue>,
-    ) {
+    let mut rtl_block_visitor = CSSRTLCompilerRtlBlockVisitor {
+        values_visitor: CSSRTLCompilerValuesVisitor {},
+    };
+    let mut commit = |new_value: &mut Vec<ComponentValue>,
+                      ltr_vec: &mut Vec<ComponentValue>,
+                      rtl_vec: &mut Vec<ComponentValue>| {
         if ltr_vec.len() > 0 {
             let ltr_rule = QualifiedRule {
                 prelude: LTR_PRELUDE.clone(),
@@ -372,13 +367,17 @@ fn convert_block(block: &mut SimpleBlock) {
             };
             rtl_rule
                 .block
-                .visit_mut_children_with(&mut CSSRTLCompilerRtlBlockVisitor {
-                    values_visitor: CSSRTLCompilerValuesVisitor {},
-                });
+                .visit_mut_children_with(&mut rtl_block_visitor);
             new_value.push(ComponentValue::QualifiedRule(Box::new(rtl_rule)));
             rtl_vec.clear();
         }
-    }
+    };
+
+    let old_value = std::mem::replace(&mut block.value, Vec::<ComponentValue>::new());
+    let mut new_value = &mut block.value;
+
+    let mut ltr_vec: Vec<ComponentValue> = vec![];
+    let mut rtl_vec: Vec<ComponentValue> = vec![];
 
     for val in old_value {
         match val {
@@ -395,7 +394,7 @@ fn convert_block(block: &mut SimpleBlock) {
         }
     }
 
-    commit(&mut new_value, &mut ltr_vec, &mut rtl_vec)
+    commit(&mut new_value, &mut ltr_vec, &mut rtl_vec);
 }
 
 pub struct CSSRTLCompilerRtlBlockVisitor {
