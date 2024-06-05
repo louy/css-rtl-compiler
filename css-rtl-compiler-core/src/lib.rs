@@ -19,7 +19,13 @@ extern crate lazy_static;
 mod visitor;
 use visitor::*;
 
-pub fn convert_css(input: &str) -> Result<String, String> {
+#[derive(Debug)]
+pub enum Error {
+    ParserError(swc_css_parser::error::Error),
+    CodegenError(std::fmt::Error),
+}
+
+pub fn convert_css(input: &str) -> Result<String, Error> {
     let cm: Lrc<SourceMap> = Default::default();
     let _handler = Handler::with_tty_emitter(ColorConfig::Auto, true, false, Some(cm.clone()));
     let comments: swc_common::comments::SingleThreadedComments = Default::default();
@@ -33,7 +39,7 @@ pub fn convert_css(input: &str) -> Result<String, String> {
     let lexer = Lexer::new(StringInput::from(&*fm), Some(&comments), config);
     let mut parser = Parser::new(lexer, config);
 
-    let mut stylesheet = parser.parse_all().expect("failed to parser module");
+    let mut stylesheet = parser.parse_all().map_err(|e| Error::ParserError(e))?;
 
     let mut visitor = CSSRTLCompilerVisitor {};
     stylesheet.visit_mut_with(&mut visitor);
@@ -51,10 +57,9 @@ pub fn convert_css(input: &str) -> Result<String, String> {
     );
     let mut codegenerator = CodeGenerator::new(writer, CodegenConfig { minify: false });
 
-    match codegenerator.emit(&stylesheet) {
-        Ok(_) => {}
-        Err(e) => return Err(format!("{:?}", e)),
-    }
+    codegenerator
+        .emit(&stylesheet)
+        .map_err(|e| Error::CodegenError(e))?;
 
     Ok(output)
 }

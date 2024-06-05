@@ -339,7 +339,7 @@ fn convert_block(block: &mut SimpleBlock) {
             }
             _ => {
                 commit(new_value, &mut ltr_vec, &mut rtl_vec);
-                new_value.push(val)
+                new_value.push(val);
             }
         }
     }

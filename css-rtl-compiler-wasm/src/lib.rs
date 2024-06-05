@@ -10,5 +10,5 @@ fn main() -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 pub fn convert(css: &str) -> Result<String, String> {
-    convert_css(css)
+    convert_css(css).map_err(|_| "Unable to convert CSS".to_owned())
 }
