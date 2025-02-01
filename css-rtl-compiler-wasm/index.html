@@ -1,6 +1,7 @@
 <html>
   <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <title>CSS RTL Compiler Playground</title>
   </head>
   <body>
     <!-- Note the usage of `type=module` here as this is an ES6 module -->
@@ -13,6 +14,8 @@
       // don't support natively imported WebAssembly as an ES module, but
       // eventually the manual initialization won't be required!
       import init, { convert } from './pkg/css_rtl_compiler_wasm.js';
+
+      import * as monaco from 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/+esm'
 
       async function run() {
         // First up we need to actually load the wasm file, so we use the
@@ -44,23 +47,40 @@
         await init();
 
         // And afterwards we can use all the functionality defined in wasm.
-        let inputEl = document.getElementById('input');
-        let outputEl = document.getElementById('output');
-        function updateOutput(input) {
+        const inputEl = document.getElementById('input');
+        const outputEl = document.getElementById('output');
+
+        const editor = monaco.editor.create(inputEl, {
+          value: `
+.selector {
+  margin-left: 10px;
+}
+
+@media (max-width: 600px) {
+  .selector2 {
+    right: 11px;
+  }
+}
+`.trim()+'\n',
+          language: "text/css",
+        });
+
+        const editor2 = monaco.editor.create(outputEl, {
+          value: ``,
+          language: "text/css",
+          readOnly: true,
+        });
+
+        function updateOutput() {
           try {
-            outputEl.className = '';
-            const output = convert(input);
-            outputEl.value = output;
-          } catch(err) {
-            outputEl.className = 'error';
-            outputEl.value = err;
+            const output = convert(editor.getValue());
+            editor2.setValue(output);
+          } catch (err) {
+            editor2.setValue(`/* Error: ${err} */`);
           }
         }
-        inputEl.addEventListener('input', (event) => {
-          const input = event.target.value;
-          updateOutput(input);
-        });
-        updateOutput(inputEl.value);
+        editor.onEndUpdate(updateOutput);
+        updateOutput();
       }
 
       run().catch(error => {
@@ -81,15 +101,11 @@
         grid-template: "input-label output-label" 1.5em "input output" auto / 1fr 1fr;
         height: 100vh;
       }
-      textarea {
+      .code {
         display: block;
         width: 100%;
         grid-row: 2;
         white-space: pre;
-      }
-      textarea.error {
-        border-color: red;
-        color: red;
       }
     </style>
 
@@ -97,20 +113,11 @@
       <label for="input">
         <span>input</span>
       </label>
-      <textarea id="input">
-.selector {
-  margin-left: 10px;
-}
-@media (max-width: 600px) {
-  .selector2 {
-    right: 11px;
-  }
-}
-</textarea>
+      <div id="input" class="code"></div>
       <label for="output">
         <span>output</span>
       </label>
-      <textarea id="output" readonly></textarea>
+      <div id="output" class="code"></div>
     </section>
   </body>
 </html>
