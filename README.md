@@ -1,6 +1,8 @@
 # CSS RTL Compiler
 Convert CSS files into an RTL-compatible version.
 
+Have a go at the [online playground](https://louy.github.io/css-rtl-compiler/) to see what kind of inputs & outputs to expect.
+
 > [!WARNING]
 > This library is work in progress and is un-finished. Contributions & ideas are welcome.
 
