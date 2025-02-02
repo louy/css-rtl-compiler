@@ -2,8 +2,10 @@
 name = "css-rtl-compiler-wasm"
 version = "0.0.0"
 edition = "2021"
-
 description = "WASM binary for css-rtl-compiler"
+
+license = "Apache-2.0"
+include = ["src/*.rs", "README.md", "LICENSE"]
 
 [lib]
 crate-type = ["cdylib"]

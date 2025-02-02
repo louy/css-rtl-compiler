@@ -2,6 +2,10 @@
 name = "css-rtl-compiler-core"
 version = "0.0.0"
 edition = "2021"
+description = "Convert CSS files into an RTL-compatible version"
+
+license = "Apache-2.0"
+include = ["src/*.rs", "README.md", "LICENSE"]
 
 [dependencies]
 lazy_static = "1.5.0"
