@@ -33,7 +33,7 @@ pub fn convert_css(input: &str) -> Result<String, Error> {
     let config: ParserConfig = Default::default();
 
     let fm = cm.new_source_file(
-        swc_common::FileName::Custom("input.css".to_owned()),
+        Lrc::new(swc_common::FileName::Custom("input.css".to_owned())),
         input.to_string(),
     );
     let lexer = Lexer::new(StringInput::from(&*fm), Some(&comments), config);

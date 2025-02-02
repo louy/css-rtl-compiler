@@ -14,8 +14,5 @@ opt-level = 's'
 
 [dependencies]
 css-rtl-compiler-core = { version = "0.0.0", path = "../css-rtl-compiler-core" }
-wasm-bindgen = "0.2"
-
-[dependencies.web-sys]
-version = "0.3"
-features = ["Document", "Element", "HtmlElement", "Node", "Window"]
+wasm-bindgen = "0.2.100"
+web-sys = { version = "0.3.77", features = ["Document", "Element", "HtmlElement", "Node", "Window"] }
