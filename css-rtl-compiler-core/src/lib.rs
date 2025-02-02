@@ -110,8 +110,11 @@ mod tests {
             print_css("body { color: red; }")
         );
     }
+
     #[test]
     fn test_retain_at_rule_order() {
+        // Broken due to a bug in swc_css
+        // https://github.com/swc-project/swc/issues/9986
         assert_eq!(
             print_css(
                 r#"
