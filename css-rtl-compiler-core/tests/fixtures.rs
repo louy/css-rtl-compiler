@@ -48,8 +48,6 @@ fn print_css(input: &str) -> String {
 #[fixture("tests/**/*.input.css")]
 // #[test]
 fn pass(file: PathBuf) {
-    println!("file: {:?}", file);
-
     let mut output_file = file.clone();
     output_file.set_file_name(file.file_stem().unwrap());
     output_file = output_file.with_extension("output.css");

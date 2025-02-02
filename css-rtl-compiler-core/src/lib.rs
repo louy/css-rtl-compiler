@@ -116,29 +116,27 @@ mod tests {
             print_css(
                 r#"
 :root {
-  padding-bottom: 1px;
-  &:where([dir="ltr"]) {
-    direction: ltr;
+  a: 1;
+  &:where(.xyz) {
+    b: 2;
   }
-  &:where([dir="rtl"]) {
-    direction: rtl;
-    padding-top: 2px;
+  .abc {
+    c: 3;
   }
-  padding: 1 2 3 4;
+  d: 4;
 }
 "#
             ),
             r#"
 :root {
-  padding-bottom: 1px;
-  &:where([dir="ltr"]) {
-    direction: ltr;
+  a: 1;
+  &:where(.xyz) {
+    b: 2;
   }
-  &:where([dir="rtl"]) {
-    direction: rtl;
-    padding-top: 2px;
+  .abc {
+    c: 3;
   }
-  padding: 1 2 3 4;
+  d: 4;
 }
 "#
         );
