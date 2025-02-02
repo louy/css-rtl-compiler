@@ -1,0 +1,11 @@
+:root {
+  --padding-left: 10px;
+  --left-margin: 10px;
+  --brightest: blue;
+}
+
+div.variable-demo {
+  padding: 10px 0px 15px var(--padding-left);
+  margin-left: var(--left-margin);
+  color: var(--brightest);
+}

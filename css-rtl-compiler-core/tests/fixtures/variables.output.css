@@ -1,0 +1,17 @@
+:root {
+  --padding-left: 10px;
+  --left-margin: 10px;
+  --brightest: blue;
+}
+
+div.variable-demo {
+  &:where([dir="ltr"], [dir="ltr"] *) {
+    padding: 10px 0px 15px var(--padding-left);
+    margin-left: var(--left-margin);
+  }
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    padding: 10px var(--padding-left) 15px 0px;
+    margin-right: var(--left-margin);
+  }
+  color: var(--brightest);
+}
