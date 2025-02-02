@@ -1,0 +1,10 @@
+@font-face {
+  font-family: "Test font";
+}
+
+@import url("normalise.css");
+@import url(/styles.css");
+
+div#id.class {
+  color: blue;
+}

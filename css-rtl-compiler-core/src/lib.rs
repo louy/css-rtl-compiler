@@ -110,4 +110,37 @@ mod tests {
             print_css("body { color: red; }")
         );
     }
+    #[test]
+    fn test_retain_at_rule_order() {
+        assert_eq!(
+            print_css(
+                r#"
+:root {
+  padding-bottom: 1px;
+  &:where([dir="ltr"]) {
+    direction: ltr;
+  }
+  &:where([dir="rtl"]) {
+    direction: rtl;
+    padding-top: 2px;
+  }
+  padding: 1 2 3 4;
+}
+"#
+            ),
+            r#"
+:root {
+  padding-bottom: 1px;
+  &:where([dir="ltr"]) {
+    direction: ltr;
+  }
+  &:where([dir="rtl"]) {
+    direction: rtl;
+    padding-top: 2px;
+  }
+  padding: 1 2 3 4;
+}
+"#
+        );
+    }
 }

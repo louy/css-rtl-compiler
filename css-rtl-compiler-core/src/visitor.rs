@@ -220,7 +220,9 @@ lazy_static! {
     });
 }
 
-fn convert_declaration(
+/// Sort a declaration into one of the RTL/LTR vectors (if applicable) and return None
+/// Returns Some(decl) if the declaration is not RTL/LTR specific
+fn sort_and_convert_declaration(
     decl: Declaration,
     ltr_vec: &mut Vec<ComponentValue>,
     rtl_vec: &mut Vec<ComponentValue>,
@@ -284,67 +286,74 @@ fn convert_block(block: &mut SimpleBlock) {
     let mut rtl_block_visitor = CSSRTLCompilerRtlBlockVisitor {
         values_visitor: CSSRTLCompilerValuesVisitor {},
     };
-    let mut commit = |new_value: &mut Vec<ComponentValue>,
-                      ltr_vec: &mut Vec<ComponentValue>,
-                      rtl_vec: &mut Vec<ComponentValue>| {
-        if ltr_vec.len() > 0 {
-            let ltr_rule = QualifiedRule {
-                prelude: LTR_PRELUDE.clone(),
-                block: SimpleBlock {
-                    span: DUMMY_SP,
-                    name: TokenAndSpan {
+    let mut commit_at_rules_to_new_value =
+        |new_value: &mut Vec<ComponentValue>,
+         ltr_vec: &mut Vec<ComponentValue>,
+         rtl_vec: &mut Vec<ComponentValue>| {
+            if ltr_vec.len() > 0 {
+                let ltr_rule = QualifiedRule {
+                    prelude: LTR_PRELUDE.clone(),
+                    block: SimpleBlock {
                         span: DUMMY_SP,
-                        token: Token::LBrace,
+                        name: TokenAndSpan {
+                            span: DUMMY_SP,
+                            token: Token::LBrace,
+                        },
+                        value: mem::take(ltr_vec),
                     },
-                    value: mem::take(ltr_vec),
-                },
-                span: DUMMY_SP,
-            };
-            new_value.push(ComponentValue::QualifiedRule(Box::new(ltr_rule)));
-        }
-        if rtl_vec.len() > 0 {
-            let mut rtl_rule = QualifiedRule {
-                prelude: RTL_PRELUDE.clone(),
-                block: SimpleBlock {
                     span: DUMMY_SP,
-                    name: TokenAndSpan {
+                };
+                new_value.push(ComponentValue::QualifiedRule(Box::new(ltr_rule)));
+            }
+            if rtl_vec.len() > 0 {
+                let mut rtl_rule = QualifiedRule {
+                    prelude: RTL_PRELUDE.clone(),
+                    block: SimpleBlock {
                         span: DUMMY_SP,
-                        token: Token::LBrace,
+                        name: TokenAndSpan {
+                            span: DUMMY_SP,
+                            token: Token::LBrace,
+                        },
+                        value: mem::take(rtl_vec),
                     },
-                    value: mem::take(rtl_vec),
-                },
-                span: DUMMY_SP,
-            };
-            rtl_rule
-                .block
-                .visit_mut_children_with(&mut rtl_block_visitor);
-            new_value.push(ComponentValue::QualifiedRule(Box::new(rtl_rule)));
-            rtl_vec.clear();
-        }
-    };
+                    span: DUMMY_SP,
+                };
+                rtl_rule
+                    .block
+                    .visit_mut_children_with(&mut rtl_block_visitor);
+                new_value.push(ComponentValue::QualifiedRule(Box::new(rtl_rule)));
+                rtl_vec.clear();
+            }
+        };
 
     let old_value = std::mem::replace(&mut block.value, Vec::<ComponentValue>::new());
     let mut new_value = &mut block.value;
 
+    // Components that are ltr specific
     let mut ltr_vec: Vec<ComponentValue> = vec![];
+    // Components that are rtl specific
     let mut rtl_vec: Vec<ComponentValue> = vec![];
 
     for val in old_value {
         match val {
             ComponentValue::Declaration(decl) => {
-                if let Some(decl) = convert_declaration(*decl, &mut ltr_vec, &mut rtl_vec) {
-                    commit(new_value, &mut ltr_vec, &mut rtl_vec);
+                if let Some(decl) = sort_and_convert_declaration(*decl, &mut ltr_vec, &mut rtl_vec)
+                {
+                    commit_at_rules_to_new_value(new_value, &mut ltr_vec, &mut rtl_vec);
                     new_value.push(ComponentValue::Declaration(Box::new(decl)));
+                } else {
+                    // Do not call add_prefixed_declerations here so that if there are subsequent declarations
+                    // that need to go into direction-specific at-rules, they can all go into a single block
                 }
             }
             _ => {
-                commit(new_value, &mut ltr_vec, &mut rtl_vec);
+                commit_at_rules_to_new_value(new_value, &mut ltr_vec, &mut rtl_vec);
                 new_value.push(val);
             }
         }
     }
 
-    commit(&mut new_value, &mut ltr_vec, &mut rtl_vec);
+    commit_at_rules_to_new_value(&mut new_value, &mut ltr_vec, &mut rtl_vec);
 }
 
 pub struct CSSRTLCompilerRtlBlockVisitor {
